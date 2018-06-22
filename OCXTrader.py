@@ -20,9 +20,12 @@ threads = []
 # 实例化OCX接口
 ocx =  Client(access_key=ocx_config.apikey,secret_key=ocx_config.secretkey)
 refresh_flag = 0
-filename = 'trades.csv'
-out = open(filename,'a',newline='')
-csvwriter = csv.writer(out,dialect='excel')
+filename1 = 'trades.csv'
+filename2 = 'log.csv'
+out1 = open(filename1,'a',newline='')
+out2 = open(filename2,'a',newline='')
+csvwriter = csv.writer(out1,dialect='excel')
+csvwriter2 = csv.writer(out2,dialect='excel')
 ######################################################################################
 # 执行交易策略
 def runStrategy():
@@ -97,7 +100,7 @@ def checkOrdersThread():
                 while (count < 10):
                     try:
                         count = count + 1
-                        status = ocx.sell(ocx_config.pair, str(round(bid1+ocx_config.slippage, 4)), str(amount))
+                        status = ocx.sell(ocx_config.pair, str(round(bid1*0.98, 4)), str(amount))
                         if (status['data']['id'] > 0):
                             nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                             trade = [nowTime, 'ocx', ocx_config.pair, 'sell', amount, bid1]
@@ -113,7 +116,7 @@ def checkOrdersThread():
                 while (count < 10):
                     try:
                         count = count + 1
-                        status = ocx.buy(ocx_config.pair, str(round(ask1-ocx_config.slippage, 4)), str(amount))
+                        status = ocx.buy(ocx_config.pair, str(round(ask1*1.02, 4)), str(amount))
                         time.sleep(1)
                         if (status['data']['id'] > 0):
                             nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -168,26 +171,29 @@ def calProfitThread():
                 sum = sum + i
             avgprice = round(sum / tradecount, 2)
             fee = avgprice * tradecount * 0.001 * 2 * ocx_config.minamount
-            print('成交均价:' + str(avgprice) + '   预计手续费支出：' + str(fee) + '    USDT余额：' + str(round(usdtamount,2)))
+            print('交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice) + '   预计手续费支出：' + str(fee) + '    USDT余额：' + str(round(usdtamount,2)))
+            log=['交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice) + '   预计手续费支出：' + str(fee) + '    USDT余额：' + str(round(usdtamount,2))]
+            csvwriter2.writerow(log)
         except Exception as ex:
             print('计算成交均价出错！')
 
 def checkOcxThread():
     while(True):
-        time.sleep(120)
-        ocxamount = get_ocx()
-        if(ocxamount > 100):
-            try:
-                res = ocx.get_market_depth('ocxeth')
-                bid = float(res['data']['bids'][0][0])
-                price = round(bid*0.95,8)
-                amount = round(ocxamount,0) - 1
-                ocx.sell('ocxusdt',price,amount)
-                print('OCX余额：' + str(ocx) + '  自动卖出！卖出价：' + str(price))
-            except Exception as ex:
+        time.sleep(30)
+        try:
+            ocxamount = get_ocx()
+            if(ocxamount > 100):
+                    res = ocx.get_market_depth('ocxeth')
+                    bid = float(res['data']['bids'][0][0])               
+                    price = round(bid*0.95,8)
+                    amount = round(ocxamount,0) - 1
+                    ocx.sell('ocxeth',price,amount)
+                    print('OCX余额：' + str(ocxamount) + '  自动卖出！卖出价：' + str(price))
+                
+            else:
+                print('OCX余额：' + str(ocxamount) + '  无需卖出！')
+        except Exception as ex:
                 print(ex)
-        else:
-            print('OCX余额：' + str(ocx) + '  无需卖出！')
 
 def get_ocx():
     try:
@@ -208,7 +214,7 @@ if __name__ == '__main__':
         print(ex)
     nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     log=['START FROM ' + str(nowTime) + '  CURRENCY:' + str(currency) + '   USDT:' + str(usdt)]
-    csvwriter.writerow(log)
+    csvwriter2.writerow(log)
     threads.append(threading.Thread(target=strategyThread, args=()))
     threads.append(threading.Thread(target=checkOrdersThread, args=()))
     threads.append(threading.Thread(target=cancelOrdersThread, args=()))
