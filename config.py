@@ -2,8 +2,8 @@
 #客户名称
 clientname = 'sunlc-eth'
 # API KEY
-apikey = 'e3b098477da6401da54bf98717e1316d'
-secretkey = '55d8ef0120d74755b41d21cb959e6145'
+apikey = ''
+secretkey = ''
 # 刷单速度，0.5-超慢速 1-慢速  2-中速  3-快速
 speed=1.5
 # 起始货币数量
