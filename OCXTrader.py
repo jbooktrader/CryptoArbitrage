@@ -219,7 +219,7 @@ if __name__ == '__main__':
     threads.append(threading.Thread(target=checkOrdersThread, args=()))
     threads.append(threading.Thread(target=cancelOrdersThread, args=()))
     threads.append(threading.Thread(target=calProfitThread, args=()))
-    threads.append(threading.Thread(target=checkOcxThread, args=()))
+    # threads.append(threading.Thread(target=checkOcxThread, args=()))
     for t in threads:
         t.setDaemon(True);
         t.start()
