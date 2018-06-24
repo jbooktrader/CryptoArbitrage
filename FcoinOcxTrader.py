@@ -118,7 +118,7 @@ def recordSpread():
         time.sleep(30)
         try:
             nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            log = [str(nowTime) + ',' + str(maxpercent1) + ',' + str(maxpercent2)]
+            log = [str(nowTime) + ',' + str(maxpercent1) + '%,' + str(maxpercent2) + '%']
             csvwriter.writerow(log)
             maxpercent1 = -10
             maxpercent2 = -10
