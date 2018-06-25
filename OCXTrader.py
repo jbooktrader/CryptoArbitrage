@@ -100,7 +100,7 @@ def checkOrdersThread():
                 while (count < 10):
                     try:
                         count = count + 1
-                        status = ocx.sell(ocx_config.pair, str(round(bid1*0.98, 4)), str(amount))
+                        status = ocx.sell(ocx_config.pair, str(round(bid1*0.995, 4)), str(amount))
                         if (status['data']['id'] > 0):
                             nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                             trade = [nowTime, 'ocx', ocx_config.pair, 'sell', amount, bid1]
@@ -116,7 +116,7 @@ def checkOrdersThread():
                 while (count < 10):
                     try:
                         count = count + 1
-                        status = ocx.buy(ocx_config.pair, str(round(ask1*1.02, 4)), str(amount))
+                        status = ocx.buy(ocx_config.pair, str(round(ask1*1.005, 4)), str(amount))
                         time.sleep(1)
                         if (status['data']['id'] > 0):
                             nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
