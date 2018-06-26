@@ -28,6 +28,21 @@ csvwriter2 = csv.writer(out2, dialect='excel')
 
 
 ######################################################################################
+# 取账户余额信息
+def get_balance(self,symbol):
+    try:
+        res = coinpark.get_balance();
+        for currency in res['result'][0]['result']['assets_list']:
+            if (currency['coin_symbol'] == symbol):
+                return (float(currency['balance']) + float(currency['freeze']))
+            else:
+                print(symbol + '取账户余额失败！')
+    except Exception as ex:
+        print(symbol + '取账户余额失败！')
+
+
+
+
 # 执行交易策略
 def runStrategy():
     try:
@@ -39,14 +54,21 @@ def runStrategy():
         ask1 = res['result']['asks'][0]['price']
         print('BID:' + str(bid1) + ' ASK:' + str(ask1))
         print(end)
-        balance = coinpark.get_balance()
-        # print(balance)
-        buy = coinpark.create_order(coinpark_config.pair,'400','0.01','1')
-        cancel = coinpark.cancel_order('11111')
+        orderid = coinpark.create_order('ETH_USDT','300','0.01','1')['result'][0]['result']
+        print(orderid)
+        time.sleep(1)
+        orderdetail = coinpark.get_orderdetail(orderid)
+        print(orderdetail['result'][0]['result']['unexecuted'])
+        time.sleep(1)
         orderlist = coinpark.get_orderlist(coinpark_config.pair)
-        orderdetail = coinpark.get_orderdetail('11111')
-        #print(buy)
-        time.sleep(5)
+        print(orderlist)
+        time.sleep(1)
+        cancel = coinpark.cancel_order(orderid)
+        print(cancel['result'][0]['result'])
+        #
+        #orderlist = coinpark.get_orderlist(coinpark_config.pair)
+
+        time.sleep(1)
     except Exception as ex:
         print(ex)
         time.sleep(1)

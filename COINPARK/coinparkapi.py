@@ -40,7 +40,7 @@ class CoinPark():
         s_cmds = json.dumps(cmds)
         sign = self.getSign(s_cmds,self.secret)
         r = requests.post(url, data={'cmds': s_cmds, 'apikey': self.key, 'sign': sign})
-        print(r.text)
+        return r.json()
 
     # 取账户余额信息
     def get_balance(self):
@@ -53,7 +53,7 @@ class CoinPark():
                 }
             }
         ]
-        self.doApiRequestWithApikey(url, cmds)
+        return self.doApiRequestWithApikey(url, cmds)
 
     #下单，side: 1买 2卖
     def create_order(self,pair,price,amount,side):
@@ -72,7 +72,7 @@ class CoinPark():
                 }
             }
         ]
-        self.doApiRequestWithApikey(url, cmds)
+        return self.doApiRequestWithApikey(url, cmds)
 
     # 取消订单
     def cancel_order(self,orderid):
@@ -85,7 +85,7 @@ class CoinPark():
                 }
             }
         ]
-        self.doApiRequestWithApikey(url, cmds)
+        return self.doApiRequestWithApikey(url, cmds)
 
     # 获取当前订单列表
     def get_orderlist(self,pair):
@@ -102,7 +102,7 @@ class CoinPark():
                 }
             }
         ]
-        self.doApiRequestWithApikey(url, cmds)
+        return self.doApiRequestWithApikey(url, cmds)
 
     # 获取订单详情
     def get_orderdetail(self,orderid):
@@ -115,7 +115,7 @@ class CoinPark():
                 }
             }
         ]
-        self.doApiRequestWithApikey(url, cmds)
+        return self.doApiRequestWithApikey(url, cmds)
 
     # 获取历史成交信息
     def get_orderhistory(self,pair,size):
@@ -131,7 +131,7 @@ class CoinPark():
                 }
             }
         ]
-        self.doApiRequestWithApikey(url, cmds)
+        return self.doApiRequestWithApikey(url, cmds)
 
     # 获取市场深度
     def get_market_depth(self, symbol):
