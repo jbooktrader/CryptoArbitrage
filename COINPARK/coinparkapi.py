@@ -56,8 +56,13 @@ class CoinPark():
         return self.doApiRequestWithApikey(url, cmds)
 
     #下单，side: 1买 2卖
-    def create_order(self,pair,price,amount,side):
+    def create_order(self,pair,price,amount,flag):
         url = "https://api.coinpark.cc/v1/orderpending"
+        if(flag == 'buy'):
+            side = '1'
+        elif(flag == 'sell'):
+            side = '2'
+
         cmds = [
             {
                 'cmd': "orderpending/trade",
