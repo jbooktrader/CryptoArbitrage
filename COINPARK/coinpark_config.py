@@ -5,7 +5,7 @@ clientname = 'sunlc-BTC'
 apikey = '389b943c6fd40485303d5c453657403454a30f10'
 secretkey = '10b750ad8c28e5469ec45a9da93d8499a3aa2eac'
 # 刷单速度，0.5-超慢速 1-慢速  2-中速  3-快速
-speed=0.1
+speed=0.01
 # 起始货币数量
 startamount = 0.5
 startmoney = 3000

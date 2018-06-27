@@ -63,7 +63,8 @@ def calProfitThread():
 # 检查补单的线程
 def balanceAccountThread():
     while (True):
-        time.sleep(coinpark_config.sleeptime)
+        # time.sleep(coinpark_config.sleeptime)
+        time.sleep(60)
         try:
             accountbalance = get_balance(coinpark_config.tradecurrency)
             if (accountbalance - coinpark_config.startamount >= coinpark_config.minamount * 2):
@@ -106,14 +107,26 @@ def balanceAccountThread():
 # 定时取消未成交订单的线程
 def cancelOrdersThread():
     while (True):
-        time.sleep(coinpark_config.sleeptime)
+        # time.sleep(coinpark_config.sleeptime)
+        time.sleep(60)
         try:
             # 查询所有状态为SUBMITTED的订单列表，并逐个取消
-            orderlist = coinpark.get_orderlist(coinpark_config.pair)
-            print(orderlist)
-            #cancel = coinpark.cancel_order(orderid)
-            #print(cancel['result'][0]['result'])
+            orderlist = coinpark.get_orderlist(coinpark_config.pair)['result'][0]['result']['items']
+            print('未成交：' + str(len(orderlist)))
+            count = 0
+            for item in orderlist:
+                try:
+                    orderid = item['id']
+                    coinpark.cancel_order(orderid)
+                    count = count +1
+                    time.sleep(0.5)
+                except Exception as ex:
+                    print(ex)
+                    print('撤单失败:' + str(orderid))
+                    time.sleep(0.5)
+            print('撤单成功：' + str(count))
         except Exception as ex:
+            print(ex)
             time.sleep(0.2)
 
 # 执行交易策略
@@ -121,16 +134,18 @@ def strategy():
     while(True):
         try:
             global bid1, ask1, tradecount, refresh_flag
-            start = time.time()
+            # time.sleep(coinpark_config.sleeptime)
+            time.sleep(2)
+            start1 = time.time()
             res = coinpark.get_market_depth(coinpark_config.pair)
-            end = round(time.time() - start,3)
+            end1 = round(time.time() - start1,3)
             bid1 = float(res['result']['bids'][0]['price'])
             ask1 = float(res['result']['asks'][0]['price'])
-            print('网络延迟：' + str(end) + '秒')
             if (bid1 > 0 and ask1 > 0):
                 price = round((bid1 + ask1) / 2, 4)
                 # price = 6112.2495
                 print('盘口买价:' + str(bid1) + '  盘口卖价:' + str(ask1) + ' 下单价:' + str(price))
+                start2 = time.time()
                 buyorderid = coinpark.create_order(coinpark_config.pair, round(price + coinpark_config.slippage, 4), coinpark_config.minamount, 'buy')['result'][0]['result']
                 if(buyorderid > 0):
                     tradecount = tradecount + 1
@@ -145,6 +160,7 @@ def strategy():
                             count = count + 1
                             sellorderid = coinpark.create_order(coinpark_config.pair, round(price + coinpark_config.slippage, 4), coinpark_config.minamount, 'sell')['result'][0]['result']
                             if (sellorderid > 0):
+                                end2 = round(time.time() - start2, 3)
                                 tradecount = tradecount + 1
                                 nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
                                 trade = [nowTime, 'coinpark', coinpark_config.pair, 'sell', coinpark_config.minamount, price]
@@ -155,6 +171,7 @@ def strategy():
                                 break;
                         except Exception as ex:
                             time.sleep(0.5)
+                print('网络延迟：' + str(end1) + '秒   下单延迟：'  +  str(end2) + '秒')
         except Exception as ex:
             print(ex)
             time.sleep(coinpark_config.sleeptime)
