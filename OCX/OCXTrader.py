@@ -2,8 +2,7 @@
 from OCX.client import Client
 import time
 import threading
-import sys
-import ocx_config
+from OCX import ocx_config
 import csv
 import datetime
 
@@ -18,7 +17,7 @@ pricelist = []
 # 线程池
 threads = []
 # 实例化OCX接口
-ocx =  Client(access_key=ocx_config.apikey,secret_key=ocx_config.secretkey)
+ocx =  Client(access_key=ocx_config.apikey, secret_key=ocx_config.secretkey)
 refresh_flag = 0
 filename1 = 'trades.csv'
 filename2 = 'log.csv'
@@ -50,11 +49,11 @@ def runStrategy():
                     try:
                         count = count + 1
                         sellstatus = ocx.sell(ocx_config.pair, str(round(price - ocx_config.slippage, 4)),
-                                                    str(ocx_config.minamount))
+                                              str(ocx_config.minamount))
                         if (sellstatus['data']['id'] >0):
                             tradecount = tradecount + 1
                             nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                            trade = [nowTime,'ocx',ocx_config.pair,'sell',ocx_config.minamount,price]
+                            trade = [nowTime,'ocx', ocx_config.pair, 'sell', ocx_config.minamount, price]
                             csvwriter.writerow(trade)
                             print('下单成功！下单数量：' + str(ocx_config.minamount) + '    交易次数：' + str(tradecount))
                             # 记录本次下单价格
@@ -95,12 +94,12 @@ def checkOrdersThread():
             if (accountbalance - ocx_config.startamount >= ocx_config.minamount * 2):
                 #amount = round(accountbalance - config.startamount, 4)
                 print('需要补单的数量：' + str(round(accountbalance - ocx_config.startamount, 4)))
-                amount = round(ocx_config.minamount * 2,4)
+                amount = round(ocx_config.minamount * 2, 4)
                 count = 0
                 while (count < 10):
                     try:
                         count = count + 1
-                        status = ocx.sell(ocx_config.pair, str(round(bid1*0.995, 4)), str(amount))
+                        status = ocx.sell(ocx_config.pair, str(round(bid1 * 0.995, 4)), str(amount))
                         if (status['data']['id'] > 0):
                             nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                             trade = [nowTime, 'ocx', ocx_config.pair, 'sell', amount, bid1]
@@ -116,7 +115,7 @@ def checkOrdersThread():
                 while (count < 10):
                     try:
                         count = count + 1
-                        status = ocx.buy(ocx_config.pair, str(round(ask1*1.005, 4)), str(amount))
+                        status = ocx.buy(ocx_config.pair, str(round(ask1 * 1.005, 4)), str(amount))
                         time.sleep(1)
                         if (status['data']['id'] > 0):
                             nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')

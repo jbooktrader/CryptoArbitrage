@@ -4,8 +4,8 @@
 
 import logging
 import json
-from WSS.WebSocketClient import Connection
-from WSS.stream import stream
+from FCOIN.WebSocketClient import Connection
+from FCOIN.stream import stream
 log = logging.getLogger(__name__)
 
 

@@ -1,11 +1,10 @@
 # coding=utf-8
-from fcoinapi import Fcoin
 import time
 import threading
-from fcoinapi import Fcoin
-from WSS.fcoin_client import fcoin_client
-import config
-import ocx_config
+from FCOIN.fcoinapi import Fcoin
+from FCOIN.fcoin_client import fcoin_client
+from FCOIN import config
+from OCX import ocx_config
 from OCX.client import Client
 import csv
 import datetime
@@ -25,7 +24,7 @@ threads = []
 # 实例化FCOIN接口
 fcoin = Fcoin()
 fcoin.auth(config.apikey, config.secretkey)
-ocx =  Client(access_key=ocx_config.apikey,secret_key=ocx_config.secretkey)
+ocx =  Client(access_key=ocx_config.apikey, secret_key=ocx_config.secretkey)
 refresh_flag1 = 0
 refresh_flag2 = 0
 maxpercent1 = -10

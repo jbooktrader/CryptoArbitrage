@@ -1,12 +1,9 @@
 # coding=utf-8
-from fcoinapi import Fcoin
 import time
 import threading
-import sys
-from asyncio.tasks import sleep
-from fcoinapi import Fcoin
-from WSS.fcoin_client import fcoin_client
-import config
+from FCOIN.fcoinapi import Fcoin
+from FCOIN.fcoin_client import fcoin_client
+from FCOIN import config
 
 ##############################全局变量################################################
 # 交易次数
@@ -35,7 +32,7 @@ def runStrategy():
             if(bid1 > 0 and ask1 >0):
                 price = round((bid1 + ask1) / 2, 2)
                 print('bid:' + str(bid1) + '  ask:' + str(ask1) + ' price:' +str(price))
-                buystatus = fcoin.buy(config.pair, str(round(price+config.slippage,2)), str(config.minamount))
+                buystatus = fcoin.buy(config.pair, str(round(price + config.slippage, 2)), str(config.minamount))
                 # 如果下买单成功，则继续下卖单，遇到异常则终止本次交易。
                 if (buystatus['status'] is 0):
                     # 下卖单，如果遇到异常则重复5次下单直到成功为止
@@ -43,11 +40,12 @@ def runStrategy():
                     while (count < 10):
                         try:
                             count = count + 1
-                            sellstatus = fcoin.sell(config.pair, str(round(price-config.slippage,2)), str(config.minamount))
+                            sellstatus = fcoin.sell(config.pair, str(round(price - config.slippage, 2)), str(
+                                config.minamount))
                             time.sleep(1)
                             if (sellstatus['status'] is 0):
                                 tradecount = tradecount + 1
-                                print('下单成功！下单数量：' +  str(config.minamount) + '    交易次数：' + str(tradecount))
+                                print('下单成功！下单数量：' + str(config.minamount) + '    交易次数：' + str(tradecount))
                                 # 记录本次下单价格
                                 pricelist.append(price)
                                 break;
@@ -86,7 +84,7 @@ def checkOrdersThread():
             if (accountbalance - config.startamount >= config.minamount * 2):
                 #amount = round(accountbalance - config.startamount, 4)
                 print('需要补单的数量：' + str(round(accountbalance - config.startamount, 4)))
-                amount = round(config.minamount * 2,4)
+                amount = round(config.minamount * 2, 4)
                 count = 0
                 while (count < 10):
                     try:
