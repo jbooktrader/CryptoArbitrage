@@ -21,7 +21,7 @@ coinpark = CoinPark()
 coinpark.auth(coinpark_config.apikey, coinpark_config.secretkey)
 refresh_flag = 0
 filename1 = 'coinpark_trades.csv'
-filename2 = 'coinpari_log.csv'
+filename2 = 'coinpark_log.csv'
 out1 = open(filename1, 'a', newline='')
 out2 = open(filename2, 'a', newline='')
 csvwriter = csv.writer(out1, dialect='excel')
@@ -139,7 +139,7 @@ def strategy():
         try:
             global bid1, ask1, tradecount, refresh_flag
             # time.sleep(coinpark_config.sleeptime)
-            time.sleep(2)
+            time.sleep(1)
             start1 = time.time()
             res = coinpark.get_market_depth(coinpark_config.pair)
             end1 = round(time.time() - start1,3)
