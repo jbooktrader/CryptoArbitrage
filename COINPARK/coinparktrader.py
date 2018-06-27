@@ -26,7 +26,8 @@ out1 = open(filename1, 'a', newline='')
 out2 = open(filename2, 'a', newline='')
 csvwriter = csv.writer(out1, dialect='excel')
 csvwriter2 = csv.writer(out2, dialect='excel')
-
+starttime = time.time()
+profitpercent = 0.3
 
 ######################################################################################
 # 取账户余额信息
@@ -37,12 +38,11 @@ def get_balance(symbol):
             if (currency['coin_symbol'] == symbol):
                 return (float(currency['balance']) + float(currency['freeze']))
     except Exception as ex:
-        print(ex)
         print(symbol + '取账户余额失败！')
 
 # 利润统计线程
 def calProfitThread():
-    global tradecount
+    global tradecount,starttime,profitpercent
     usdtamount = 0
     while (True):
         time.sleep(60)
@@ -53,7 +53,13 @@ def calProfitThread():
                 sum = sum + i
             avgprice = round(sum / tradecount, 2)
             fee = avgprice * tradecount * 0.001 * coinpark_config.minamount
+            runtime = round((time.time() - starttime)/60,1)
+            profit = round(fee * profitpercent,2)
+            dailyprofit = round(fee*profitpercent*86400/(time.time()-starttime),2)
+            print('**********************************利润统计**********************************')
             print('交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice) + '   预计手续费支出：' + str(fee) + '    USDT余额：' + str(round(usdtamount,2)))
+            print('运行时间：' + str(runtime) + '分钟   预计利润：' + str(profit) + 'USDT    24小时预计利润：' + str(dailyprofit) + 'USDT')
+            print('****************************************************************************')
             log=['交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice) + '   预计手续费支出：' + str(fee) + '    USDT余额：' + str(round(usdtamount,2))]
             csvwriter2.writerow(log)
         except Exception as ex:
@@ -110,7 +116,6 @@ def cancelOrdersThread():
         # time.sleep(coinpark_config.sleeptime)
         time.sleep(60)
         try:
-            # 查询所有状态为SUBMITTED的订单列表，并逐个取消
             orderlist = coinpark.get_orderlist(coinpark_config.pair)['result'][0]['result']['items']
             print('未成交：' + str(len(orderlist)))
             count = 0
@@ -126,7 +131,6 @@ def cancelOrdersThread():
                     time.sleep(0.5)
             print('撤单成功：' + str(count))
         except Exception as ex:
-            print(ex)
             time.sleep(0.2)
 
 # 执行交易策略
@@ -166,20 +170,15 @@ def strategy():
                                 trade = [nowTime, 'coinpark', coinpark_config.pair, 'sell', coinpark_config.minamount, price]
                                 csvwriter.writerow(trade)
                                 print(str(nowTime) + ':下卖单成功！下单数量：' + str(coinpark_config.minamount) + '    交易次数：' + str(tradecount))
-                                # 记录本次下单价格
                                 pricelist.append(price)
                                 break;
                         except Exception as ex:
                             time.sleep(0.5)
-                print('网络延迟：' + str(end1) + '秒   下单延迟：'  +  str(end2) + '秒')
+                print('行情延迟：' + str(end1) + '秒   下单延迟：'  +  str(end2) + '秒')
         except Exception as ex:
             print(ex)
             time.sleep(coinpark_config.sleeptime)
 
-
-
-
-# 程序主入口
 if __name__ == '__main__':
     try:
         currency = get_balance(coinpark_config.tradecurrency)
