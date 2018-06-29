@@ -27,8 +27,6 @@ out2 = open(filename2, 'a', newline='')
 csvwriter = csv.writer(out1, dialect='excel')
 csvwriter2 = csv.writer(out2, dialect='excel')
 starttime = time.time()
-profitpercent = 0.3
-
 ######################################################################################
 # 取账户余额信息
 def get_balance(symbol):
@@ -42,7 +40,7 @@ def get_balance(symbol):
 
 # 利润统计线程
 def calProfitThread():
-    global tradecount,starttime,profitpercent
+    global tradecount,starttime
     usdtamount = 0
     while (True):
         time.sleep(60)
@@ -54,8 +52,8 @@ def calProfitThread():
             avgprice = round(sum / tradecount, 2)
             fee = avgprice * tradecount * 0.001 * coinpark_config.minamount
             runtime = round((time.time() - starttime)/60,1)
-            profit = round(fee * profitpercent,2)
-            dailyprofit = round(fee*profitpercent*86400/(time.time()-starttime),2)
+            profit = round(fee * coinpark_config.profitpercent,2)
+            dailyprofit = round(fee*coinpark_config.profitpercent*86400/(time.time()-starttime),2)
             print('**********************************利润统计**********************************')
             print('交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice) + '   预计手续费支出：' + str(fee) + '    USDT余额：' + str(round(usdtamount,2)))
             print('运行时间：' + str(runtime) + '分钟   预计利润：' + str(profit) + 'USDT    24小时预计利润：' + str(dailyprofit) + 'USDT')
@@ -138,8 +136,8 @@ def strategy():
     while(True):
         try:
             global bid1, ask1, tradecount, refresh_flag
-            # time.sleep(coinpark_config.sleeptime)
-            time.sleep(1)
+            time.sleep(coinpark_config.sleeptime)
+            # time.sleep(1)
             start1 = time.time()
             res = coinpark.get_market_depth(coinpark_config.pair)
             end1 = round(time.time() - start1,3)
