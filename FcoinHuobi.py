@@ -50,6 +50,7 @@ def runStrategy():
             refresh_flag2 = 0
             if(ask1 >0 and ask2 >0 and bid1 >0 and bid2 >0):
                 # FCOIN BUY OCX SELL
+                nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 spread1 = round(bid2 - ask1,4)
                 percent1 = round(spread1*100/bid2,4)
                 spread2 = round(bid1 - ask2,4)
@@ -60,8 +61,8 @@ def runStrategy():
                 if (percent2 > maxpercent2):
                     maxpercent2 = percent2
                 print('***************************************************************************')
-                print('FCOIN BUY HUOBI SELL: ' + str(percent1) + '%   最大价差:' + str(maxpercent1) + '%')
-                print('HUOBI BUY FCOIN SELL: ' + str(percent2) + '%   最大价差:' + str(maxpercent2) + '%')
+                print(str(nowTime) + '  FCOIN BUY HUOBI SELL: ' + str(percent1) + '%   最大价差:' + str(maxpercent1) + '%')
+                print(str(nowTime) + '  HUOBI BUY FCOIN SELL: ' + str(percent2) + '%   最大价差:' + str(maxpercent2) + '%')
             time.sleep(1)
     except Exception as ex:
         time.sleep(0.5)
@@ -125,7 +126,7 @@ if __name__ == '__main__':
     threads.append(threading.Thread(target=receive_data_thread1, args=()))
     threads.append(threading.Thread(target=receive_data_thread2, args=()))
     threads.append(threading.Thread(target=strategyThread, args=()))
-    # threads.append(threading.Thread(target=recordSpread, args=()))
+    threads.append(threading.Thread(target=recordSpread, args=()))
     for t in threads:
         t.setDaemon(True);
         t.start()
