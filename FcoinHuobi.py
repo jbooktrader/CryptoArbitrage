@@ -18,8 +18,8 @@ ask2 = 0
 minamount = 0.5
 minpercent = 0.003
 #货币对
-pair = 'ethusdt'
-pair2 = 'ETH/USDT'
+pair = ''
+pair2 = ''
 # 线程池
 threads = []
 # 实例化FCOIN接口
@@ -121,11 +121,9 @@ if __name__ == '__main__':
     if len(sys.argv) > 3:
         if sys.argv[1] != '':
             pair = sys.argv[1]
-            print('PAIR1:' + str(pair))
 
         if sys.argv[2] != '':
             pair2 = sys.argv[2]
-            print('PAIR2:' + str(pair2))
 
     client = fcoin_client()
     client.stream.stream_depth.subscribe(depth)
@@ -138,6 +136,8 @@ if __name__ == '__main__':
     threads.append(threading.Thread(target=receive_data_thread2, args=()))
     threads.append(threading.Thread(target=strategyThread, args=()))
     threads.append(threading.Thread(target=recordSpread, args=()))
+
+    print('PAIR1:' + str(pair) + '   PAIR2:' + str(pair2))
     for t in threads:
         t.setDaemon(True);
         t.start()
