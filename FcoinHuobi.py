@@ -118,12 +118,12 @@ def recordSpread():
 
 # 程序主入口
 if __name__ == '__main__':
-    if len(sys.argv) > 2:
-        if sys.argv[0] != '':
+    if len(sys.argv) > 3:
+        if sys.argv[1] != '':
             pair = sys.argv[1]
             print('PAIR1:' + str(pair))
 
-        if sys.argv[1] != '':
+        if sys.argv[2] != '':
             pair2 = sys.argv[2]
             print('PAIR2:' + str(pair2))
 
