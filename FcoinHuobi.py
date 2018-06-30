@@ -30,7 +30,7 @@ refresh_flag1 = 0
 refresh_flag2 = 0
 maxpercent1 = -10
 maxpercent2 = -10
-filename1 = pair + '_spread.csv'
+filename1 = ''
 
 ######################################################################################
 
@@ -138,6 +138,8 @@ if __name__ == '__main__':
     threads.append(threading.Thread(target=recordSpread, args=()))
 
     print('PAIR1:' + str(pair) + '   PAIR2:' + str(pair2))
+    filename1 = pair + '_spread.csv'
+    print(filename1)
     for t in threads:
         t.setDaemon(True);
         t.start()
