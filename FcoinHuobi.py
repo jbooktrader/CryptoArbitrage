@@ -7,6 +7,7 @@ from FCOIN import config
 import csv
 import datetime
 import ccxt
+import sys
 ##############################全局变量################################################
 # 记录最新买卖价
 bid1 = 0
@@ -29,9 +30,7 @@ refresh_flag1 = 0
 refresh_flag2 = 0
 maxpercent1 = -10
 maxpercent2 = -10
-filename1 = 'spread.csv'
-out1 = open(filename1,'a',newline='')
-csvwriter = csv.writer(out1,dialect='excel')
+filename1 = pair + '_spread.csv'
 
 ######################################################################################
 
@@ -103,11 +102,14 @@ def receive_data_thread2():
 def recordSpread():
     global maxpercent1,maxpercent2
     while(True):
-        time.sleep(30)
+        time.sleep(60)
         try:
             nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             log = [str(nowTime) + ',' + str(maxpercent1) + '%,' + str(maxpercent2) + '%']
+            out1 = open(filename1, 'a', newline='')
+            csvwriter = csv.writer(out1, dialect='excel')
             csvwriter.writerow(log)
+            out1.close()
             maxpercent1 = -10
             maxpercent2 = -10
             print('SPREAD RECORDED!')
@@ -116,6 +118,16 @@ def recordSpread():
 
 # 程序主入口
 if __name__ == '__main__':
+    if len(sys.argv) > 2:
+        if sys.argv[0] != '':
+            pair = sys.argv[0]
+
+        if sys.argv[1] != '':
+            pair2 = sys.argv[1]
+
+
+
+
     client = fcoin_client()
     client.stream.stream_depth.subscribe(depth)
     client.start()
