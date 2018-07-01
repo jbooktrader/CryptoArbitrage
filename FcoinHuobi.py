@@ -75,11 +75,25 @@ def depth(data):
     global bid1, ask1,refresh_flag1
     if data:
         try:
-            bid1 = data['bids'][0]
-            ask1 = data['asks'][0]
+            bidamount = 0
+            askamount = 0
+            bids = data['bids']
+            asks = data['asks']
+            for i in range(20):
+                bidamount = bidamount + bids[i*2+1]
+                if(bidamount >= minamount*3):
+                    bid1 = bids[i*2]
+                    break
+
+            for i in range(20):
+                askamount = askamount + asks[i*2+1]
+                if(askamount >= minamount*3):
+                    ask1 = asks[i*2]
+                    break
+
             refresh_flag1 = 1
         except Exception as ex:
-            print('获取行情异常' + str(ex))
+            print('FCOIN获取行情异常' + str(ex))
 
 def receive_data_thread1():
     while 1:
@@ -93,11 +107,23 @@ def receive_data_thread2():
         time.sleep(0.5)
         try:
             res = huobi.fetch_order_book(pair2,10)
-            bid2 = res['bids'][0][0]
-            ask2 = res['asks'][0][0]
+            bidamount = 0
+            askamount = 0
+            for item in res['bids']:
+                bidamount = bidamount + item[1]
+                if (bidamount >= minamount * 3):
+                    bid2 = item[0]
+                    break
+
+            for item in res['asks']:
+                askamount = askamount + item[1]
+                if (askamount >= minamount * 3):
+                    ask2 = item[0]
+                    break
+
             refresh_flag2 = 1
         except Exception as ex:
-            print('获取行情异常' + str(ex))
+            print('HUOBI获取行情异常' + str(ex))
 
 def recordSpread():
     global maxpercent1,maxpercent2
