@@ -144,12 +144,10 @@ def recordSpread():
 
 # 程序主入口
 if __name__ == '__main__':
-    if len(sys.argv) > 3:
-        if sys.argv[1] != '':
-            pair = sys.argv[1]
+    pair = sys.argv[1]
+    pair2 = sys.argv[2]
+    minamount = float(sys.argv[3])
 
-        if sys.argv[2] != '':
-            pair2 = sys.argv[2]
 
     client = fcoin_client()
     client.stream.stream_depth.subscribe(depth)
@@ -163,7 +161,7 @@ if __name__ == '__main__':
     threads.append(threading.Thread(target=strategyThread, args=()))
     threads.append(threading.Thread(target=recordSpread, args=()))
 
-    print('PAIR1:' + str(pair) + '   PAIR2:' + str(pair2))
+    print('PAIR1:' + str(pair) + '   PAIR2:' + str(pair2) + '   MINAMOUNT:' + str(minamount))
     filename1 = pair + '_spread.csv'
     print(filename1)
     for t in threads:
