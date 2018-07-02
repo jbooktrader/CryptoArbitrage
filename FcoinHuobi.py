@@ -162,6 +162,7 @@ if __name__ == '__main__':
     threads.append(threading.Thread(target=recordSpread, args=()))
 
     print('PAIR1:' + str(pair) + '   PAIR2:' + str(pair2) + '   MINAMOUNT:' + str(minamount))
+    print('****************************************************************')
     filename1 = pair + '_spread.csv'
     print(filename1)
     for t in threads:
