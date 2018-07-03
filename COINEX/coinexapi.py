@@ -1,122 +1,116 @@
-import hmac
 import hashlib
-import requests
-import sys
 import time
-import base64
-import json
-from collections import OrderedDict
+import requests
+import collections
 
+class CoinExApiError(Exception):
+    pass
 
-class Coinex():
-    def __init__(self, base_url='https://api.coinex.com/v1/'):
-        self.base_url = base_url
-
-    def auth(self, key, secret):
-        self.key = key
-        self.secret = secret
-
-    def public_request(self, method, api_url, **payload):
-        """request public url"""
-        r_url = self.base_url + api_url
-        try:
-            r = requests.request(method, r_url, params=payload)
-            if r.status_code == 200:
-                return r.json()
-            else:
-                r.raise_for_status()
-        except requests.exceptions.HTTPError as err:
-            print(err)
-            print(r.text)
-        except Exception as err:
-            print(err)
-
-    def get_sign(params, secret_key):
-        sort_params = sorted(params)
-        data = []
-        for item in sort_params:
-            data.append(item + '=' + str(params[item]))
-        str_params = "{0}&secret_key={1}".format('&'.join(data), secret_key)
-        token = hashlib.md5(str_params).hexdigest().upper()
-        return token
-
-    def signed_request(self, method, api_url, **payload):
-        """request a signed url"""
-
-        param = ''
-        if payload:
-            sort_pay = sorted(payload.items())
-            # sort_pay.sort()
-            for k in sort_pay:
-                param += '&' + str(k[0]) + '=' + str(k[1])
-            param = param.lstrip('&')
-        timestamp = str(int(time.time() * 1000))
-        full_url = self.base_url + api_url
-
-        if method == 'GET':
-            if param:
-                full_url = full_url + '?' +param
-            sig_str = method + full_url + timestamp
-        elif method == 'POST':
-            sig_str = method + full_url + timestamp + param
-
-        signature = self.get_signed(bytes(sig_str, 'utf-8'))
-
-        headers = {
-            'FC-ACCESS-KEY': self.key,
-            'FC-ACCESS-SIGNATURE': signature,
-            'FC-ACCESS-TIMESTAMP': timestamp
+class CoinEx:
+    _headers = {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36'
         }
 
-        try:
-            r = requests.request(method, full_url, headers=headers, json=payload)
-            if r.status_code == 200:
-                return r.json()
-            else:
-                r.raise_for_status()
-        except requests.exceptions.HTTPError as err:
-            print(err)
-            print(r.text)
-        except Exception as err:
-            print(err)
+    def __init__(self, access_id=None, secret=None):
+        self._access_id = access_id
+        self._secret = secret
 
-    def get_market_depth(self, symbol):
-        """get market depth"""
-        return self.public_request('GET', 'market/depth?market={market}&merge=0.001&limit=10'.format(market=symbol))
+    def market_list(self):
+        return self._v1('market/list')
 
-    def get_mining_difficulty(self):
-        """get market depth"""
-        return self.public_request('GET', 'order/mining/difficulty')
+    def market_ticker(self, market):
+        return self._v1('market/ticker', market=market)
 
-    def get_balance(self):
-        """get user balance"""
-        return self.signed_request('GET', 'accounts/balance')
+    def market_ticker_all(self):
+        return self._v1('market/ticker/all')
 
-    def list_orders(self, **payload):
-        """get orders"""
-        return self.signed_request('GET', 'orders', **payload)
+    def market_depth(self, market, merge='0.00000001', **params):
+        return self._v1('market/depth', market=market, merge=merge, **params)
 
-    def create_order(self, **payload):
-        """create order"""
-        return self.signed_request('POST', 'orders', **payload)
+    def market_deals(self, market):
+        return self._v1('market/deals', market=market)
 
-    def buy(self,symbol, price, amount):
-        """buy someting"""
-        return self.create_order(symbol=symbol, side='buy', type='limit', price=str(price), amount=amount)
+    def market_kline(self, market, type='1hour', **params):
+        return self._v1('market/kline', market=market, type=type, **params)
 
-    def sell(self, symbol, price, amount):
-        """buy someting"""
-        return self.create_order(symbol=symbol, side='sell', type='limit', price=str(price), amount=amount)
+    def balance(self):
+        return self._v1('balance/', auth=True)
 
-    def get_order(self, order_id):
-        """get specfic order"""
-        return self.signed_request('GET', 'orders/{order_id}'.format(order_id=order_id))
+    def balance_coin_withdraw_list(self, **params):
+        return self._v1('balance/coin/withdraw', auth=True, **params)
 
-    def cancel_order(self, order_id):
-        """cancel specfic order"""
-        return self.signed_request('POST', 'orders/{order_id}/submit-cancel'.format(order_id=order_id))
+    def balance_coin_withdraw(self, coin_type, coin_address, actual_amount, **params):
+        return self._v1('balance/coin/withdraw', method='post', auth=True, coin_type=coin_type, coin_address=coin_address, actual_amount=actual_amount, **params)
 
-    def order_result(self, order_id):
-        """check order result"""
-        return self.signed_request('GET', 'orders/{order_id}/match-results'.format(order_id=order_id))
+    def balance_coin_withdraw_cancel(self, coin_withdraw_id, **params):
+        return self._v1('balance/coin/withdraw', method='delete', auth=True, coin_withdraw_id=coin_withdraw_id, **params)
 
+    def order_limit(self, market, type, amount, price, **params):
+        return self._v1('order/limit', method='post', auth=True, market=market, type=type, amount=amount, price=price, **params)
+
+    def order_market(self, market, type, amount, **params):
+        return self._v1('order/market', method='post', auth=True, market=market, type=type, amount=amount, **params)
+
+    def order_ioc(self, market, type, amount, price, **params):
+        return self._v1('order/ioc', method='post', auth=True, market=market, type=type, amount=amount, price=price, **params)
+
+    def order_pending(self, market, page=1, limit=100):
+        return self._v1('order/pending', method='get', auth=True, market=market, page=page, limit=limit)
+
+    def order_finished(self, market, page=1, limit=100):
+        return self._v1('order/finished', method='get', auth=True, market=market, page=page, limit=limit)
+
+    def order_status(self, market, id):
+        return self._v1('order/', method='get', auth=True, market=market, id=id)
+
+    def order_deals(self, id, page=1, limit=100):
+        return self._v1('order/deals', method='get', auth=True, id=id, page=page, limit=limit)
+
+    def order_user_deals(self, market, page=1, limit=100):
+        return self._v1('order/user/deals', method='get', auth=True, market=market, page=page, limit=limit)
+
+    def order_pending_cancel(self, market, id):
+        return self._v1('order/pending', method='delete', auth=True, market=market, id=id)
+
+    def order_mining_difficulty(self):
+        return self._v1('order/mining/difficulty', method='get', auth=True)
+
+    def _v1(self, path, method='get', auth=False, **params):
+        headers = dict(self._headers)
+
+        if auth:
+            if not self._access_id or not self._secret:
+                raise CoinExApiError('API keys not configured')
+
+            params.update(access_id=self._access_id)
+            params.update(tonce=int(time.time() * 1000))
+
+        params = collections.OrderedDict(sorted(params.items()))
+
+        if auth:
+            headers.update(Authorization=self._sign(params))
+
+        if method == 'post':
+            resp = requests.post('https://api.coinex.com/v1/' + path, json=params, headers=headers)
+        else:
+            fn = getattr(requests, method)
+            resp = fn('https://api.coinex.com/v1/' + path, params=params, headers=headers)
+
+        return self._process_response(resp)
+
+    def _process_response(self, resp):
+        resp.raise_for_status()
+
+        data = resp.json()
+        if data['code'] is not 0:
+            raise CoinExApiError(data['message'])
+
+        return data['data']
+
+    def _sign(self, params):
+        data = '&'.join([key + '=' + str(params[key]) for key in sorted(params)])
+        data = data + '&secret_key=' + self._secret
+        data = data.encode()
+        return hashlib.md5(data).hexdigest().upper()
