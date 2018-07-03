@@ -1,0 +1,20 @@
+{
+  "exchanges1":{
+    "name":"huobipro",
+    "fee":"0.001",
+    "apikey":"",
+    "secret":""
+  },
+  "exchanges2":{
+    "name":"gateio",
+    "fee":"0.001",
+    "apikey":"",
+    "secret":""
+  },
+  "exchanges3":{
+    "name":"fcoin",
+    "fee":"0.001",
+    "apikey":"",
+    "secret":""
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "pair1":{
+    "name":"ETH/USDT",
+    "alias":"ETH/USDT",
+    "rate":"USDT",
+    "minamount":"2",
+    "minprice":"0.01"
+  },
+  "pair2":{
+    "name":"LTC/USDT",
+    "alias":"LTC/USDT",
+    "rate":"USDT",
+    "minamount":"50",
+    "minprice":"0.01"
+  },
+  "pair3":{
+    "name":"BTC/USDT",
+    "alias":"BTC/USDT",
+    "rate":"USDT",
+    "minamount":"0.2",
+    "minprice":"0.01"
+  }
+}
