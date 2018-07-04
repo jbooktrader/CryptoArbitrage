@@ -22,7 +22,7 @@ pair = tradecurrency  + basecurrency
 # 下单时间间隔（秒）
 interval = 12/speed
 # 最小下单数量
-minamount = startamount*speed/50
+minamount = round(startamount*speed/50,2)
 #检查和取消订单时间
 sleeptime=300/speed
 # 最小价差
@@ -48,7 +48,8 @@ filename1 = 'coinex_trades.csv'
 filename2 = 'coinex_log.csv'
 starttime = time.time()
 profitpercent = 0.2
-
+difficulty = 0
+tradelimit = 0
 ######################################################################################
 # 取账户余额信息
 def get_balance(symbol):
@@ -59,25 +60,18 @@ def get_balance(symbol):
         print(ex)
         print(symbol + '取账户余额失败！')
 
-def get_difficulty():
-    while(True):
-        try:
-            res = coinex.order_mining_difficulty()['difficulty']
-            print('当前挖矿难度：' + str(res))
-        except Exception as ex:
-            print(ex)
-            print('取挖矿难度失败！')
-        time.sleep(sleeptime)
-
 
 # 利润统计线程
 def calProfitThread():
-    global tradecount,starttime,profitpercent
+    global tradecount,starttime,profitpercent,difficulty,tradelimit
     usdtamount = 0
     while (True):
-        time.sleep(sleeptime)
+        time.sleep(120)
         sum = 0
         try:
+            difficulty = float(coinex.order_mining_difficulty()['difficulty'])
+            cetprice = float(coinex.market_depth('CETUSDT')['bids'][0][0])
+            tradelimit = round(difficulty * cetprice,2)
             usdtamount = get_balance(basecurrency)
             for i in pricelist:
                 sum = sum + i
@@ -90,6 +84,7 @@ def calProfitThread():
             print('**********************************利润统计**********************************')
             print(content)
             print('运行时间：' + str(runtime) + '分钟   预计利润：' + str(profit) + 'USDT    24小时预计利润：' + str(dailyprofit) + 'USDT')
+            print('当前挖矿难度：' + str(difficulty) + '个／小时   每小时挖矿限额：')
             print('****************************************************************************')
             log(filename2,content)
         except Exception as ex:
@@ -100,7 +95,7 @@ def calProfitThread():
 # 检查补单的线程
 def balanceAccountThread():
     while (True):
-        time.sleep(sleeptime)
+        time.sleep(120)
         try:
             accountbalance = get_balance(tradecurrency)
             if (accountbalance - startamount >= minamount * 2):
@@ -144,7 +139,7 @@ def balanceAccountThread():
 # 定时取消未成交订单的线程
 def cancelOrdersThread():
     while (True):
-        time.sleep(sleeptime)
+        time.sleep(150)
         try:
             orderlist = coinex.order_pending(pair)
             size = float(orderlist['count'])
