@@ -26,7 +26,7 @@ interval = 12/speed
 # 最小下单数量
 minamount = startamount*speed/50
 #检查和取消订单时间
-sleeptime=300/speed
+sleeptime=150/speed
 # 最小价差
 minspread = 0.2
 # 滑点
@@ -49,10 +49,6 @@ coinpark.auth(apikey, secretkey)
 refresh_flag = 0
 filename1 = 'coinpark_trades.csv'
 filename2 = 'coinpark_log.csv'
-out1 = open(filename1, 'a', newline='')
-out2 = open(filename2, 'a', newline='')
-csvwriter = csv.writer(out1, dialect='excel')
-csvwriter2 = csv.writer(out2, dialect='excel')
 starttime = time.time()
 ######################################################################################
 # 取账户余额信息
@@ -81,12 +77,12 @@ def calProfitThread():
             runtime = round((time.time() - starttime)/60,1)
             profit = round(fee * profitpercent,2)
             dailyprofit = round(fee*profitpercent*86400/(time.time()-starttime),2)
+            content = '交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice) + '   预计手续费支出：' + str(fee) + '    USDT余额：' + str(round(usdtamount,2))
             print('**********************************利润统计**********************************')
-            print('交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice) + '   预计手续费支出：' + str(fee) + '    USDT余额：' + str(round(usdtamount,2)))
+            print(content)
             print('运行时间：' + str(runtime) + '分钟   预计利润：' + str(profit) + 'USDT    24小时预计利润：' + str(dailyprofit) + 'USDT')
             print('****************************************************************************')
-            log=['交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice) + '   预计手续费支出：' + str(fee) + '    USDT余额：' + str(round(usdtamount,2))]
-            csvwriter2.writerow(log)
+            log(filename2, content)
         except Exception as ex:
             print('计算成交均价出错！')
 
@@ -94,8 +90,7 @@ def calProfitThread():
 # 检查补单的线程
 def balanceAccountThread():
     while (True):
-        # time.sleep(sleeptime)
-        time.sleep(60)
+        time.sleep(sleeptime)
         try:
             accountbalance = get_balance(tradecurrency)
             if (accountbalance - startamount >= minamount * 2):
@@ -109,7 +104,7 @@ def balanceAccountThread():
                         if (orderid > 0):
                             nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                             trade = [nowTime, 'coinpark', pair, 'sell', amount, bid1]
-                            csvwriter.writerow(trade)
+                            log(filename1, trade)
                             print('补单卖出：' + str(amount))
                             break;
                     except Exception as ex:
@@ -125,7 +120,7 @@ def balanceAccountThread():
                         if (orderid > 0):
                             nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                             trade = [nowTime, 'coinpark', pair, 'buy', amount, bid1]
-                            csvwriter.writerow(trade)
+                            log(filename1, trade)
                             print('补单买入：' + str(amount))
                             break;
                     except Exception as ex:
@@ -138,8 +133,7 @@ def balanceAccountThread():
 # 定时取消未成交订单的线程
 def cancelOrdersThread():
     while (True):
-        # time.sleep(sleeptime)
-        time.sleep(60)
+        time.sleep(sleeptime)
         try:
             orderlist = coinpark.get_orderlist(pair)['result'][0]['result']['items']
             print('未成交：' + str(len(orderlist)))
@@ -158,13 +152,20 @@ def cancelOrdersThread():
         except Exception as ex:
             time.sleep(0.2)
 
+#记录交易日志
+def log(filename,content):
+    out = open(filename, 'a', newline='')
+    csvwriter = csv.writer(out, dialect='excel')
+    csvwriter.writerow(content)
+    out.close()
+
+
 # 执行交易策略
 def strategy():
     while(True):
         try:
             global bid1, ask1, tradecount, refresh_flag
             time.sleep(interval)
-            # time.sleep(1)
             start1 = time.time()
             res = coinpark.get_market_depth(pair)
             end1 = round(time.time() - start1,3)
@@ -180,7 +181,7 @@ def strategy():
                     tradecount = tradecount + 1
                     nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
                     trade = [nowTime, 'coinpark', pair, 'buy', minamount, price]
-                    csvwriter.writerow(trade)
+                    log(filename1,trade)
                     print(str(nowTime) + ':下买单成功！下单数量：' + str(minamount) + '    交易次数：' + str(tradecount))
                     pricelist.append(price)
                     count = 0
@@ -193,7 +194,7 @@ def strategy():
                                 tradecount = tradecount + 1
                                 nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
                                 trade = [nowTime, 'coinpark', pair, 'sell', minamount, price]
-                                csvwriter.writerow(trade)
+                                log(filename1, trade)
                                 print(str(nowTime) + ':下卖单成功！下单数量：' + str(minamount) + '    交易次数：' + str(tradecount))
                                 pricelist.append(price)
                                 break;
@@ -214,8 +215,7 @@ if __name__ == '__main__':
     nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     content = 'START FROM ' + str(nowTime) + '  CURRENCY:' + str(currency) + '   USDT:' + str(usdt)
     print(content)
-    log=[content]
-    csvwriter2.writerow(log)
+    log(filename2,content)
     threads.append(threading.Thread(target=strategy, args=()))
     threads.append(threading.Thread(target=cancelOrdersThread, args=()))
     threads.append(threading.Thread(target=calProfitThread, args=()))
