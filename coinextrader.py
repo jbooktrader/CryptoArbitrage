@@ -197,7 +197,7 @@ def strategy():
     while(True):
         try:
             global bid1, ask1, tradecount, refresh_flag,totalfee
-            time.sleep(1)
+            time.sleep(2)
             minute = datetime.datetime.now().minute
             if (minute == 0):
                 totalfee = 0
