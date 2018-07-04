@@ -102,7 +102,7 @@ def calProfitThread():
 # 检查补单的线程
 def balanceAccountThread():
     while (True):
-        time.sleep(60)
+        time.sleep(30)
         try:
             accountbalance = get_balance(tradecurrency)
             if (accountbalance - startamount >= minamount * 2):
@@ -197,7 +197,7 @@ def strategy():
     while(True):
         try:
             global bid1, ask1, tradecount, refresh_flag,totalfee
-            time.sleep(interval)
+            time.sleep(1)
             minute = datetime.datetime.now().minute
             if (minute == 0):
                 totalfee = 0
@@ -208,8 +208,9 @@ def strategy():
             ask1 = float(res['asks'][0][0])
             if(tradelimit < totalfee * 0.9):
                 print('本小时挖矿限额已满，暂停挖矿。')
-            #elif (bid1 > 0 and ask1 > 0 and (ask1-bid1)>= minspread):
-            elif (bid1 > 0 and ask1 > 0):
+                time.sleep(interval)
+            elif (bid1 > 0 and ask1 > 0 and (ask1-bid1)>= minspread):
+            #elif (bid1 > 0 and ask1 > 0):
                 price = round((bid1 + ask1) / 2, 4)
                 print('盘口买价:' + str(bid1) + '  盘口卖价:' + str(ask1) + ' 下单价:' + str(price))
                 start2 = time.time()
@@ -240,6 +241,7 @@ def strategy():
                         except Exception as ex:
                             time.sleep(0.5)
                 print('行情延迟：' + str(end1) + '秒   下单延迟：'  +  str(end2) + '秒')
+                time.sleep(2)
         except Exception as ex:
             print(ex)
             time.sleep(interval)
