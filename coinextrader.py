@@ -52,7 +52,7 @@ profitpercent = 0.2
 #挖矿难度
 difficulty = 0
 #每小时挖矿限额
-tradelimit = 0
+tradelimit = 999
 #本小时已挖矿金额
 totalfee= 0
 ######################################################################################
@@ -71,7 +71,7 @@ def calProfitThread():
     global tradecount,starttime,profitpercent,difficulty,tradelimit,totalfee
     usdtamount = 0
     while (True):
-        time.sleep(30)
+        time.sleep(120)
         sum = 0
         try:
             difficulty = float(coinex.order_mining_difficulty()['difficulty'])
@@ -181,7 +181,7 @@ def autoSell():
         time.sleep(120)
         try:
             cetamount = get_balance('CET')
-            if (amount > 1):
+            if (cetamount > 1):
                 bid = float(coinex.market_depth('CETUSDT')['bids'][0][0])
                 price = round(bid * 0.95, 4)
                 amount = round(cetamount, 0) - 1
@@ -197,7 +197,7 @@ def strategy():
     while(True):
         try:
             global bid1, ask1, tradecount, refresh_flag,totalfee
-            time.sleep(6)
+            time.sleep(interval)
             minute = datetime.datetime.now().minute
             if (minute == 0):
                 totalfee = 0
@@ -250,6 +250,7 @@ if __name__ == '__main__':
         usdt = get_balance(basecurrency)
     except Exception as ex:
         print(ex)
+
     nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     content = '开始时间：' + str(nowTime) + '  初始币量:' + str(currency) + '   初始USDT:' + str(usdt)
     print(content)
