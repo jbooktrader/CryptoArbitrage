@@ -47,9 +47,14 @@ refresh_flag = 0
 filename1 = 'coinex_trades.csv'
 filename2 = 'coinex_log.csv'
 starttime = time.time()
+# 返利比例
 profitpercent = 0.2
+#挖矿难度
 difficulty = 0
+#每小时挖矿限额
 tradelimit = 0
+#本小时已挖矿金额
+totalfee= 0
 ######################################################################################
 # 取账户余额信息
 def get_balance(symbol):
@@ -63,10 +68,10 @@ def get_balance(symbol):
 
 # 利润统计线程
 def calProfitThread():
-    global tradecount,starttime,profitpercent,difficulty,tradelimit
+    global tradecount,starttime,profitpercent,difficulty,tradelimit,totalfee
     usdtamount = 0
     while (True):
-        time.sleep(120)
+        time.sleep(30)
         sum = 0
         try:
             difficulty = float(coinex.order_mining_difficulty()['difficulty'])
@@ -79,12 +84,14 @@ def calProfitThread():
             fee = avgprice * tradecount * 0.001 * minamount
             runtime = round((time.time() - starttime)/60,1)
             profit = round(fee * profitpercent,2)
-            dailyprofit = round(fee*profitpercent*86400/(time.time()-starttime),2)
-            content = '交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice) + '   预计手续费支出：' + str(fee) + '    USDT余额：' + str(round(usdtamount,2))
+            # dailyprofit = round(fee*profitpercent*86400/(time.time()-starttime),2)
+            dailyprofit = round(tradelimit*24*profitpercent,2)
+            content = '交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice)  + '   USDT余额：' + str(round(usdtamount,2))
             print('**********************************利润统计**********************************')
             print(content)
-            print('运行时间：' + str(runtime) + '分钟   预计利润：' + str(profit) + 'USDT    24小时预计利润：' + str(dailyprofit) + 'USDT')
-            print('当前挖矿难度：' + str(difficulty) + '个／小时   每小时挖矿限额：')
+            # print('运行时间：' + str(runtime) + '分钟   预计利润：' + str(profit) + 'USDT    24小时预计利润：' + str(dailyprofit) + 'USDT')
+            print('当前挖矿难度：' + str(difficulty) + '个／小时   每小时挖矿限额：' + str(tradelimit) + 'USDT  24小时预计利润：' + str(dailyprofit) + 'USDT')
+            print('运行时间：' + str(runtime) + '分钟   本小时手续费支出：' + str(totalfee) + 'USDT   累计手续费支出：' +  str(fee) + 'USDT')
             print('****************************************************************************')
             log(filename2,content)
         except Exception as ex:
@@ -168,18 +175,40 @@ def log(filename,content):
     csvwriter.writerow(content)
     out.close()
 
+
+def autoSell():
+    while (True):
+        time.sleep(120)
+        try:
+            cetamount = get_balance('CET')
+            if (amount > 1):
+                bid = float(coinex.market_depth('CETUSDT')['bids'][0][0])
+                price = round(bid * 0.95, 4)
+                amount = round(cetamount, 0) - 1
+                print(coinex.order_limit('CETUSDT', 'sell', amount, price)['id'])
+                print('CET余额：' + str(cetamount) + '  自动卖出！卖出价：' + str(price))
+            else:
+                print('CET余额：' + str(cetamount) + '  无需卖出！')
+        except Exception as ex:
+            print(ex)
+
 # 执行交易策略
 def strategy():
     while(True):
         try:
-            global bid1, ask1, tradecount, refresh_flag
+            global bid1, ask1, tradecount, refresh_flag,totalfee
             time.sleep(6)
+            minute = datetime.datetime.now().minute
+            if (minute == 0):
+                totalfee = 0
             start1 = time.time()
             res = coinex.market_depth(pair)
             end1 = round(time.time() - start1,3)
             bid1 = float(res['bids'][0][0])
             ask1 = float(res['asks'][0][0])
-            if (bid1 > 0 and ask1 > 0):
+            if(tradelimit < totalfee * 0.9):
+                print('本小时挖矿限额已满，暂停挖矿。')
+            elif (bid1 > 0 and ask1 > 0):
                 price = round((bid1 + ask1) / 2, 4)
                 print('盘口买价:' + str(bid1) + '  盘口卖价:' + str(ask1) + ' 下单价:' + str(price))
                 start2 = time.time()
@@ -188,6 +217,7 @@ def strategy():
                     tradecount = tradecount + 1
                     nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
                     trade = [nowTime, 'coinex', pair, 'buy', minamount, price]
+                    totalfee = totalfee + round(price*minamount*0.001,4)
                     log(filename1,trade)
                     print(str(nowTime) + ':下买单成功！下单数量：' + str(minamount) + '    交易次数：' + str(tradecount))
                     pricelist.append(price)
@@ -201,6 +231,7 @@ def strategy():
                                 tradecount = tradecount + 1
                                 nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
                                 trade = [nowTime, 'coinex', pair, 'sell', minamount, price]
+                                totalfee = totalfee + round(price * minamount * 0.001, 4)
                                 log(filename1,trade)
                                 print(str(nowTime) + ':下卖单成功！下单数量：' + str(minamount) + '    交易次数：' + str(tradecount))
                                 pricelist.append(price)
@@ -223,11 +254,11 @@ if __name__ == '__main__':
     content = '开始时间：' + str(nowTime) + '  初始币量:' + str(currency) + '   初始USDT:' + str(usdt)
     print(content)
     log(filename2,content)
-    #threads.append(threading.Thread(target=get_difficulty(), args=()))
     threads.append(threading.Thread(target=strategy, args=()))
     threads.append(threading.Thread(target=cancelOrdersThread, args=()))
     threads.append(threading.Thread(target=calProfitThread, args=()))
     threads.append(threading.Thread(target=balanceAccountThread, args=()))
+    threads.append(threading.Thread(target=autoSell, args=()))
     for t in threads:
         t.setDaemon(True);
         t.start()
