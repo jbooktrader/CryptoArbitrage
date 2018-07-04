@@ -197,7 +197,7 @@ def strategy():
     while(True):
         try:
             global bid1, ask1, tradecount, refresh_flag,totalfee
-            time.sleep(2)
+            time.sleep(6)
             minute = datetime.datetime.now().minute
             if (minute == 0):
                 totalfee = 0
@@ -208,7 +208,8 @@ def strategy():
             ask1 = float(res['asks'][0][0])
             if(tradelimit < totalfee * 0.9):
                 print('本小时挖矿限额已满，暂停挖矿。')
-            elif (bid1 > 0 and ask1 > 0 and (ask1-bid1)>= minspread):
+            #elif (bid1 > 0 and ask1 > 0 and (ask1-bid1)>= minspread):
+            elif (bid1 > 0 and ask1 > 0):
                 price = round((bid1 + ask1) / 2, 4)
                 print('盘口买价:' + str(bid1) + '  盘口卖价:' + str(ask1) + ' 下单价:' + str(price))
                 start2 = time.time()
