@@ -24,7 +24,7 @@ interval = 12/speed
 # 最小下单数量
 minamount = round(startamount*speed/50,2)
 #检查和取消订单时间
-sleeptime=300/speed
+sleeptime=150/speed
 # 最小价差
 minspread = 0.02
 # 滑点
@@ -197,7 +197,7 @@ def strategy():
     while(True):
         try:
             global bid1, ask1, tradecount, refresh_flag,totalfee
-            time.sleep(2)
+            time.sleep(1)
             minute = datetime.datetime.now().minute
             if (minute == 0):
                 totalfee = 0
