@@ -102,7 +102,7 @@ def calProfitThread():
 # 检查补单的线程
 def balanceAccountThread():
     while (True):
-        time.sleep(120)
+        time.sleep(60)
         try:
             accountbalance = get_balance(tradecurrency)
             if (accountbalance - startamount >= minamount * 2):
@@ -146,7 +146,7 @@ def balanceAccountThread():
 # 定时取消未成交订单的线程
 def cancelOrdersThread():
     while (True):
-        time.sleep(150)
+        time.sleep(120)
         try:
             orderlist = coinex.order_pending(pair)
             size = float(orderlist['count'])
@@ -197,7 +197,7 @@ def strategy():
     while(True):
         try:
             global bid1, ask1, tradecount, refresh_flag,totalfee
-            time.sleep(6)
+            time.sleep(interval)
             minute = datetime.datetime.now().minute
             if (minute == 0):
                 totalfee = 0
