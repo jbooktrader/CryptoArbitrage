@@ -206,7 +206,7 @@ def strategy():
             end1 = round(time.time() - start1,3)
             bid1 = float(res['bids'][0][0])
             ask1 = float(res['asks'][0][0])
-            if(tradelimit < totalfee * 0.85):
+            if(tradelimit*0.85 < totalfee):
                 print('本小时挖矿限额已满，暂停挖矿。')
                 time.sleep(interval)
             elif (bid1 > 0 and ask1 > 0 and (ask1-bid1)>= minspread):
