@@ -197,7 +197,7 @@ def strategy():
     while(True):
         try:
             global bid1, ask1, tradecount, refresh_flag,totalfee
-            time.sleep(2)
+            time.sleep(3)
             minute = datetime.datetime.now().minute
             if (minute == 0):
                 totalfee = 0
@@ -239,9 +239,9 @@ def strategy():
                                 pricelist.append(price)
                                 break;
                         except Exception as ex:
-                            time.sleep(2)
+                            time.sleep(3)
                 print('行情延迟：' + str(end1) + '秒   下单延迟：'  +  str(end2) + '秒')
-                time.sleep(2)
+                time.sleep(3)
         except Exception as ex:
             print(ex)
             time.sleep(interval)
