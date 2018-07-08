@@ -239,7 +239,7 @@ def strategy():
                                 pricelist.append(price)
                                 break;
                         except Exception as ex:
-                            time.sleep(0.5)
+                            time.sleep(2)
                 print('行情延迟：' + str(end1) + '秒   下单延迟：'  +  str(end2) + '秒')
                 time.sleep(2)
         except Exception as ex:
