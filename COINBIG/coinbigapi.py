@@ -10,8 +10,14 @@ import operator
 
 
 class CoinBig():
+    _headers = {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36'
+    }
+
     def __init__(self, apiKey='', secret=''):
-        self.url = 'http://www.3k2k.com:81/api/publics/v1'
+        self.url = 'https://www.coinbig.com/api/publics/v1'
         self.apiKey = apiKey
         self.secret = secret
 
@@ -106,8 +112,10 @@ class CoinBig():
         return res.json()
 
 
-if __name__ == '__main__':
-    ex = CoinBig(apiKey, secret)
-    print(ex.userinfo())
-    print('-' * 80)
-    print(ex.account_records())
+    def market_depth(self,symbol):
+        headers = dict(self._headers)
+        url = self.url + '/depth'
+        params = {'symbol': symbol, 'size': 20}
+        fn = getattr(requests, 'get')
+        res = fn(url, params=params, headers=headers)
+        return res.json()
