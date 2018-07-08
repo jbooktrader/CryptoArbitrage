@@ -86,7 +86,7 @@ def calProfitThread():
             profit = round(fee * profitpercent,2)
             # dailyprofit = round(fee*profitpercent*86400/(time.time()-starttime),2)
             dailyprofit = round(tradelimit*24*profitpercent,2)
-            content = '交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice)  + '   USDT余额：' + str(round(usdtamount,2))
+            content = ['交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice)  + '   USDT余额：' + str(round(usdtamount,2))]
             print('**********************************利润统计**********************************')
             print(content)
             # print('运行时间：' + str(runtime) + '分钟   预计利润：' + str(profit) + 'USDT    24小时预计利润：' + str(dailyprofit) + 'USDT')
@@ -255,7 +255,7 @@ if __name__ == '__main__':
         print(ex)
 
     nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    content = '开始时间：' + str(nowTime) + '  初始币量:' + str(currency) + '   初始USDT:' + str(usdt)
+    content = ['开始时间：' + str(nowTime) + '  初始币量:' + str(currency) + '   初始USDT:' + str(usdt)]
     print(content)
     log(filename2,content)
     threads.append(threading.Thread(target=strategy, args=()))
