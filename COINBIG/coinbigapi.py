@@ -1,25 +1,62 @@
-import time
-import base64
-import hashlib
-import requests
-import json
-import random
-import urllib
 import copy
+import hashlib
+import json
 import operator
+import time
+import urllib
+from urllib.request import Request, urlopen
 
 
-class CoinBig():
-    _headers = {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36'
-    }
+from COINBIG.enums import *
 
-    def __init__(self, apiKey='', secret=''):
-        self.url = 'https://www.coinbig.com/api/publics/v1'
-        self.apiKey = apiKey
+
+# ORDER_STATUS
+# 1：未完成,2：部分成交,3：完全成交,4：用户撤销、5：部分撤销、6：成交失败
+FINISH_CODE = 3
+PARTIAL_FINISH_CODE = 2
+PENDING_CODE = 1
+CANCEL_CODE = 4
+PARTIAL_CANCEL_CODE = 5
+FAIL_CODE = 6
+
+
+def format_symbol(symbol):
+    return symbol.replace('/', '_').lower()
+
+
+class CoinBigClient():
+    def __init__(self, key='', secret=''):
+        self._exchange_name = COINBIG
+        self.url = 'https://www.coinbig.com'
+        self.apiKey = key
         self.secret = secret
+
+    @property
+    def exchange(self):
+        return self._exchange_name
+
+    def httpGet(self, url):
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36'
+        }
+        request = Request(url=url, headers=headers)
+        content = urlopen(request, timeout=15).read()
+        content = content.decode('utf-8')
+        json_data = json.loads(content)
+        return json_data
+
+    def httpPost(self, url, params):
+        params['time'] = int(round(time.time() * 1000))
+        params = self.sign(params)
+        temp_params = urllib.parse.urlencode(params)
+        data = bytes(temp_params, encoding='utf8')
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36'
+        }
+        request = Request(url=url, data=data, headers=headers)
+        content = urlopen(request, timeout=30).read()
+        json_data = json.loads(content)
+        return json_data
 
     def sign(self, params):
         _params = copy.copy(params)
@@ -27,52 +64,212 @@ class CoinBig():
         sort_params = dict(sort_params)
         sort_params['secret_key'] = self.secret
         string = urllib.parse.urlencode(sort_params)
+        # _sign1 = hashlib.md5(bytes('abc'.encode('utf-8'))).hexdigest().upper()
         _sign = hashlib.md5(bytes(string.encode('utf-8'))).hexdigest().upper()
         params['sign'] = _sign
         return params
 
-    # 获取用户的提现/充值记录
-    def account_records(self, ):
-        url = self.url + '/account_records'
-        params = {'apikey': self.apiKey, 'shortName': 'btc_usdt', 'status': 0, 'recordType': 0}
+    # 查询深度信息
+    def fetch_order_book(self, symbol, **kwargs):
+        url = self.url + '/api/publics/v1/depth'
+        url += '?symbol=' + format_symbol(symbol)
+        try:
+            res = self.httpGet(url)
+            code = res['code']
+            if code == 0:
+                payload = {
+                    'bids': res['data']['bids'][:10],
+                    'asks': res['data']['asks'][:10]
+                }
+                return payload
+            else:
+                return code, res['msg']
+        except Exception as e:
+            return GENERIC_ERROR_CODE, None
 
-        data = self.sign(params)
-        res = requests.post(url, data=data)
-        return res.json()
+    def fetch_balance(self, currency, **kwargs):
+        url = self.url + '/api/publics/v1/userinfoBySymbol'
+        params = {
+            'apikey': self.apiKey,
+            'shortName': currency.upper(),
+        }
+        try:
+            res = self.httpPost(url, params)
+            code = res['code']
+            if code == 0:
+                # format payload
+                payload = res['data']
+                return payload
+            else:
+                return code, res['msg']
+        except Exception as e:
+            return GENERIC_ERROR_CODE, None
 
     # 获取所有订单信息
-    def orders_info(self, symbol, trade_type, nums):
-        url = self.url + '/orders_info'
-        params = {'apikey': self.apiKey, 'symbol': trade_type, 'size': nums, 'type': 3}
-        data = self.sign(params)
-        res = requests.post(url, data=data)
-        return res.json()
+    def fetch_all_orders(self, symbol, limit, status, **kwargs):
+        url = self.url + '/api/publics/v1/orders_info'
+        params = {
+            'apikey': self.apiKey,
+            'symbol': format_symbol(symbol),
+            'size': limit,
+            'type': status
+        }
+        try:
+            res = self.httpPost(url, params)
+            code = res['code']
+            if code == 0:
+                # format payload
+                payload = res['data']['orders']
+                return SUCCESS_CODE, payload
+            else:
+
+                return code, res['msg']
+        except Exception as e:
+
+            return GENERIC_ERROR_CODE, None
 
     # 用户信息
-    def userinfo(self):
-        url = self.url + '/userinfo'
+    def fetch_user_info(self, **kwargs):
+        url = self.url + '/api/publics/v1/userinfo'
+        params = {
+            'apikey': self.apiKey,
+        }
+        try:
+            res = self.httpPost(url, params)
+            code = res['code']
+            if code == 0:
+                # format payload
+                payload = res['data']['info']
+                return SUCCESS_CODE, payload
+            else:
 
-        params = {'apikey': self.apiKey}
-        data = self.sign(params)
-        res = requests.post(url, data=data)
-        return res.json()
+                return code, res['msg']
+        except Exception as e:
 
-    # 下订单
-    def place_order(self, trade_type, price, amount):
+            return GENERIC_ERROR_CODE, None
+
+    # 获取用户的提现/充值记录
+    def fetch_account_records(self, currency, status, recode_type, **kwargs):
+        url = self.url + '/account_records'
+        params = {
+            'apikey': self.apiKey,
+            'shortName': currency.upper(),
+            'status': status,
+            'recordType': recode_type
+        }
+        try:
+            res = self.httpPost(url, params)
+            code = res['code']
+            if code == 0:
+                # format payload
+                payload = res['data']
+                return SUCCESS_CODE, payload
+            else:
+
+                return code, res['msg']
+        except Exception as e:
+
+            return GENERIC_ERROR_CODE, None
+
+    # 查询最新行情价
+    def fetch_ticker(self, symbol, **kwargs):
+        url = self.url + '/api/publics/v1/ticker'
+        url += '?symbol=' + format_symbol(symbol)
+        try:
+            res = self.httpGet(url)
+            code = res['code']
+            if code == 0:
+                payload = res['data']['ticker']
+                return SUCCESS_CODE, payload
+            else:
+
+                return code, res['msg']
+        except Exception as e:
+
+            return GENERIC_ERROR_CODE, None
+
+    # ======================
+    # == 以下接口还未调试过 ==
+    # ======================
+
+    # 查询订单状况
+    def fetch_order(self, order_id):
+        url = self.url + '/order_info'
+        params = {
+            'apikey': self.apiKey,
+            'order_id': order_id
+        }
+        try:
+            res = self.httpPost(url, params)
+            code = res['code']
+            if code == 0:
+                # format payload
+                payload = res['data']
+                return payload
+            else:
+
+                return code, res['msg']
+        except Exception as e:
+
+            return GENERIC_ERROR_CODE, None
+
+    # 撤销订单
+    def cancel_order(self, order_id, **kwargs):
         '''
-        type    String 买卖类型: 限价单(buy/sell) 市价单(buy_market/sell_market)
+        apikey  String  是   公钥
+        order_id String 是   订单号
+        sign    String  是   签名
+        '''
+        url = self.url + '/api/publics/v1/cancel_order'
+        params = {
+            'apikey': self.apiKey,
+            'order_id': order_id
+        }
+        try:
+            res = self.httpPost(url, params)
+            code = res['code']
+            if code == 0:
+                # format payload
+                payload = res['data']
+                return SUCCESS_CODE, payload
+            else:
+
+                return code, res['msg']
+        except Exception as e:
+
+            return GENERIC_ERROR_CODE, None
+
+    # 创建订单
+    def create_order(self, symbol, price, amount, side, **kwargs):
+        '''
+        side    String 买卖类型: 限价单(buy/sell) 市价单(buy_market/sell_market)
         price   double  否   下单价格 [限价买单(必填)
         amount  double  否   交易数量 [限价卖单（必填)
         '''
-        url = self.url + '/trade'
-        params = {'apikey': self.apiKey, 'type': trade_type, 'price': price, 'amount': amount}
-        data = self.sign(params)
-        res = requests.post(url, data=data)
+        url = self.url + '/api/publics/v1/trade'
+        params = {
+            'amount': amount,
+            'apikey': self.apiKey,
+            'price': price,
+            'symbol': format_symbol(symbol),
+            'type': side
+        }
+        try:
+            res = self.httpPost(url, params)
+            code = res['code']
+            if code == 0:
+                # format payload
+                payload = res['data']['order_id']
+                return payload
+            else:
 
-        return res.json()
+                return res['msg']
+        except Exception as e:
+
+            return GENERIC_ERROR_CODE, None
 
     # 批量下订单
-    def batch_orders(self, symbol, trade_type, order_list):
+    def batch_create_orders(self, symbol, trade_type, order_list):
         '''
         apikey  String  是   用户申请的apiKey
         symbol  String  是   btc_usdt: 比特币
@@ -82,11 +279,25 @@ class CoinBig():
         '''
         url = self.url + '/batch_trade'
 
-        params = {'apikey': self.apiKey, 'symbol': symbol, 'type': trade_type, 'orders_data': str(order_list)}
-        data = self.sign(params)
+        params = {
+            'apikey': self.apiKey,
+            'symbol': format_symbol(symbol),
+            'type': trade_type,
+            'orders_data': str(order_list)
+        }
+        try:
+            res = self.httpPost(url, params)
+            code = res['code']
+            if code == 0:
+                # format payload
+                payload = res['data']
+                return SUCCESS_CODE, payload
+            else:
 
-        res = requests.post(url, data=data)
-        return res.json()
+                return code, res['msg']
+        except Exception as e:
+
+            return GENERIC_ERROR_CODE, None
 
     # 批量撤销订单
     def batch_cancel_orders(self, symbol):
@@ -96,26 +307,20 @@ class CoinBig():
         sign    String  是   签名
         '''
         url = self.url + '/cance_all_orders'
-        params = {'apikey': self.apiKey, 'symbol': symbol}
-        data = self.sign(params)
+        params = {
+            'apikey': self.apiKey,
+            'symbol': format_symbol(symbol)
+        }
+        try:
+            res = self.httpPost(url, params)
+            code = res['code']
+            if code == 0:
+                # format payload
+                payload = res['data']
+                return SUCCESS_CODE, payload
+            else:
 
-        res = requests.post(url, data=data)
-        return res.json()
+                return code, res['msg']
+        except Exception as e:
 
-    # 查询订单状况
-    def fetch_order(self, order_id):
-        url = self.url + '/order_info'
-        params = {'apikey': self.apiKey, 'order_id': order_id}
-        data = self.sign(params)
-
-        res = requests.post(url, data=data)
-        return res.json()
-
-
-    def market_depth(self,symbol):
-        headers = dict(self._headers)
-        url = self.url + '/depth'
-        params = {'symbol': symbol, 'size': 20}
-        fn = getattr(requests, 'get')
-        res = fn(url, params=params, headers=headers)
-        return res.json()
+            return GENERIC_ERROR_CODE, None
