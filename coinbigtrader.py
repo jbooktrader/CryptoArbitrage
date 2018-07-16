@@ -94,7 +94,7 @@ def strategy():
             print('行情延迟：' + str(end1) + '秒')
 
             if (bid1 > 0 and ask1 > 0 and (ask1-bid1)>= minspread):
-                print('start trade')
+                print('********交易开始********')
                 #计算差额
                 diff = round(currency1 + currency2 - startamount,4)
                 print(diff)
@@ -102,29 +102,39 @@ def strategy():
                 if(currency1 < currency2):
                     sellamount = currency2
                     buyamount = currency2 - diff
+                    print('账号1买入:' + str(buyamount) + '  账号2卖出:' + str(sellamount));
                     sellorderid = coinbig2.create_order(pair,price,'0.1','sell')
                     if(sellorderid > 0 and buyamount >= minamount):
                         buyorderid = coinbig1.create_order(pair,price,'0.1','buy')
                     print('买入ID：' + str(buyorderid) + ' 卖出ID：' + str(sellorderid))
                     time.sleep(10)
-                    sellstatus = coinbig2.fetch_order(sellorderid)
-                    buystatus = coinbig1.fetch_order(buyorderid)
+                    sellstatus = coinbig2.fetch_order(sellorderid)['orderinfo']['status']
+                    buystatus = coinbig1.fetch_order(buyorderid)['orderinfo']['status']
                     print('买入订单状态：' + str(buystatus) + '   卖出订单状态：' + str(sellstatus))
+                    if(buystatus != 0):
+                        coinbig1.cancel_order(buyorderid)
+                    if (sellstatus != 0):
+                        coinbig2.cancel_order(sellorderid)
 
                 # 账号2的币比账号1的币少，则在账号2买入，账号1卖出，卖出量为账号1的数量
                 else:
                     sellamount = currency1
                     buyamount = currency1-diff
+                    print('账号2买入:' + str(buyamount) + '  账号1卖出:' + str(sellamount));
                     sellorderid = coinbig1.create_order(pair, price, '0.1', 'sell')
                     if (sellorderid > 0 and buyamount >= minamount):
                         buyorderid = coinbig2.create_order(pair, price, '0.1', 'buy')
                     print('买入ID：' + str(buyorderid) + ' 卖出ID：' + str(sellorderid))
                     time.sleep(10)
-                    sellstatus = coinbig2.fetch_order(sellorderid)
-                    buystatus = coinbig1.fetch_order(buyorderid)
+                    sellstatus = coinbig1.fetch_order(sellorderid)
+                    buystatus = coinbig2.fetch_order(buyorderid)
                     print('买入订单状态：' + str(buystatus) + '   卖出订单状态：' + str(sellstatus))
+                    if (buystatus != 0):
+                        coinbig2.cancel_order(buyorderid)
+                    if (sellstatus != 0):
+                        coinbig1.cancel_order(sellorderid)
 
-                print('trade finish')
+                print('********交易完成********')
                 currency1 = get_balance1(tradecurrency)
                 currency2 = get_balance2(tradecurrency)
                 time.sleep(10)
@@ -133,7 +143,6 @@ def strategy():
             time.sleep(interval)
 
 if __name__ == '__main__':
-
     try:
         currency1 = get_balance1(tradecurrency)
         currency2 = get_balance2(tradecurrency)

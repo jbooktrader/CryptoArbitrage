@@ -256,6 +256,7 @@ class CoinBigClient():
         }
         try:
             res = self.httpPost(url, params)
+            print(res)
             code = res['code']
             if code == 0:
                 # format payload
