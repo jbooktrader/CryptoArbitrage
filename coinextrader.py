@@ -86,7 +86,7 @@ def calProfitThread():
             profit = round(fee * profitpercent,2)
             # dailyprofit = round(fee*profitpercent*86400/(time.time()-starttime),2)
             dailyprofit = round(tradelimit*24*profitpercent,2)
-            content = '交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice)  + '   USDT余额：' + str(round(usdtamount,2))
+            content = ['交易次数：'+ str(tradecount)  +'    成交均价:' + str(avgprice)  + '   USDT余额：' + str(round(usdtamount,2))]
             print('**********************************利润统计**********************************')
             print(content)
             # print('运行时间：' + str(runtime) + '分钟   预计利润：' + str(profit) + 'USDT    24小时预计利润：' + str(dailyprofit) + 'USDT')
@@ -102,14 +102,14 @@ def calProfitThread():
 # 检查补单的线程
 def balanceAccountThread():
     while (True):
-        time.sleep(60)
+        time.sleep(120)
         try:
             accountbalance = get_balance(tradecurrency)
             if (accountbalance - startamount >= minamount * 2):
                 print('需要卖出补单的数量：' + str(round(accountbalance - startamount, 4)))
                 amount = round(minamount * 2, 4)
                 count = 0
-                while (count < 5):
+                while (count < 2):
                     try:
                         count = count + 1
                         orderid = coinex.order_limit(pair,'sell',str(amount),str(round(bid1 * 0.995, 2)))
@@ -120,12 +120,12 @@ def balanceAccountThread():
                             print('补单卖出：' + str(amount))
                             break;
                     except Exception as ex:
-                        time.sleep(0.5)
+                        time.sleep(2)
             elif (startamount - accountbalance >= minamount * 2):
                 print('需要买入补单的数量：' + str(round(startamount - accountbalance, 4)))
                 amount = round(minamount * 2, 4)
                 count = 0
-                while (count < 5):
+                while (count < 2):
                     try:
                         count = count + 1
                         orderid = coinex.order_limit(pair,'buy',str(amount),str(round(ask1 * 1.005, 4)))['id']
@@ -136,7 +136,7 @@ def balanceAccountThread():
                             print('补单买入：' + str(amount))
                             break;
                     except Exception as ex:
-                        time.sleep(0.5)
+                        time.sleep(2)
             else:
                 print('差额：' + str(round(accountbalance - startamount, 4)) + '  无需补单')
         except Exception as ex:
@@ -158,11 +158,11 @@ def cancelOrdersThread():
                         orderid = item['id']
                         coinex.order_pending_cancel(pair,orderid)
                         count = count +1
-                        time.sleep(0.5)
+                        time.sleep(3)
                     except Exception as ex:
                         print(ex)
                         print('撤单失败:' + str(orderid))
-                        time.sleep(0.5)
+                        time.sleep(3)
                 print('撤单成功：' + str(count))
         except Exception as ex:
             print(ex)
@@ -178,7 +178,7 @@ def log(filename,content):
 
 def autoSell():
     while (True):
-        time.sleep(120)
+        time.sleep(300)
         try:
             cetamount = get_balance('CET')
             if (cetamount > 1):
@@ -197,7 +197,7 @@ def strategy():
     while(True):
         try:
             global bid1, ask1, tradecount, refresh_flag,totalfee
-            time.sleep(2)
+            time.sleep(3)
             minute = datetime.datetime.now().minute
             if (minute == 0):
                 totalfee = 0
@@ -224,7 +224,7 @@ def strategy():
                     print(str(nowTime) + ':下买单成功！下单数量：' + str(minamount) + '    交易次数：' + str(tradecount))
                     pricelist.append(price)
                     count = 0
-                    while (count < 5):
+                    while (count < 3):
                         try:
                             count = count + 1
                             sellorderid = coinex.order_limit(pair, 'sell', minamount,round(price - slippage, 2))['id']
@@ -239,9 +239,9 @@ def strategy():
                                 pricelist.append(price)
                                 break;
                         except Exception as ex:
-                            time.sleep(0.5)
+                            time.sleep(3)
                 print('行情延迟：' + str(end1) + '秒   下单延迟：'  +  str(end2) + '秒')
-                time.sleep(2)
+                time.sleep(8)
         except Exception as ex:
             print(ex)
             time.sleep(interval)
@@ -255,7 +255,7 @@ if __name__ == '__main__':
         print(ex)
 
     nowTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    content = '开始时间：' + str(nowTime) + '  初始币量:' + str(currency) + '   初始USDT:' + str(usdt)
+    content = ['开始时间：' + str(nowTime) + '  初始币量:' + str(currency) + '   初始USDT:' + str(usdt)]
     print(content)
     log(filename2,content)
     threads.append(threading.Thread(target=strategy, args=()))
